@@ -2,6 +2,7 @@ import customtkinter as ctk
 import re
 import webbrowser
 import win32com.client as win32
+from datetime import datetime
 from models import *
 from PIL import Image
 from tkinter import messagebox
@@ -31,6 +32,15 @@ class LoginPage():
         self.github_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 14), text = 'Made by Rb', fg_color = '#ffffff', text_color = '#0080ff', hover_color = '#ffffff', command = self.open_github_profile).place(x = 0, y = 530)
         self.exit_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Sair', width = 100, fg_color = '#d70428', corner_radius = 14, hover_color = '#af0850', command = self.window.quit).place(x = 200, y = 530)
         self.window.bind('<Return>', lambda event = None: self.login())
+
+        self.time_label = ctk.CTkLabel(self.window, font = ctk.CTkFont('verdana', size = 10), text = '', text_color = '#ffffff')
+        self.time_label.place(x = 390, y = 0)
+        self.update_time()
+
+    def update_time(self):
+        now = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+        self.time_label.configure(text = now)
+        self.window.after(1000, self.update_time)
 
     def login(self):
         username = self.username_entry.get().strip()
@@ -147,4 +157,69 @@ class RegisterPage():
             LoginPage(self.window)
 
 class OptionPage():
-    pass
+    
+    def __init__(self, window, user):
+        self.username = user
+        self.window = ctk.CTkToplevel(window)
+        self.window.title('Option Page')
+        self.window.geometry('500x730')
+        self.window.resizable(False, False)
+        self.window.transient(window)
+        
+        self.frame = ctk.CTkFrame(self.window, bg_color = '#ffffff', width = 500, height = 730, fg_color = '#ffffff', border_color = '#ffffff').place(x = 0, y = 0)
+        self.text1_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = 'Ola,', text_color = '#000000').place(x = 180, y = 30)
+        self.text2_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = f' {self.username}', text_color = '#d70428').place(x = 220, y = 30)
+        self.text3_label = ctk.CTkLabel(self.window, bg_color = "#ffffff", font = ctk.CTkFont('verdana', size = 20), text = "O que vc gostaria de fazer hoje?", text_color = '#000000').place(x = 80, y = 60)
+        self.text4_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 14), text = 'Made by Rb', text_color = '#0080ff').place(x = 10, y = 700)
+        self.exit_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Sair', width = 100, corner_radius = 14, fg_color = '#d70428', text_color = '#ffffff', hover_color = '#af0850', command = self.window.quit).place(x = 200, y = 700)
+        self.comeback_button = ctk.CTkButton(self.window, bg_color = '#00FF00', font = ctk.CTkFont('verdana', size = 16), text = 'voltar', width = 0, corner_radius = 0, fg_color = '#80ff80', text_color = '#000000',  hover_color = '#4dcea7', command = lambda: [self.window.destroy, LoginPage(self.window)]).place(x = 0, y = 0)
+        self.combobox1 = ctk.CTkOptionMenu(self.window, values = ['Cadastrar', 'Pesquisar', 'Controle de frota'], bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), fg_color = '#ff8040', dropdown_fg_color = '#ff8040', dropdown_hover_color = '#ffa87d', text_color = '#000000', command = self.select_option).place(x = 50, y = 110)
+        self.combobox2 = None
+        self.frames = {}
+        self.current_frame = None
+
+    def select_option(self, option):
+        if option == 'Cadastrar':
+            self.show_combobox2()
+        elif option == 'Pesquisar':
+            self.window.withdraw(), QueryPage(self.window, self.username)
+        elif option == 'Controle de frota':
+            self.window.withdraw(), FleetPage(self.window, self.username)
+        else:
+            self.hide_combobox2()
+
+    def show_combobox2(self):
+        if self.combobox2 is None:
+            self.combobox2 = ctk.CTkOptionMenu(self.window, values = ['Clientes', 'Receitas', 'Despesas'], bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), fg_color = '#ff8040', dropdown_fg_color = '#ff8040', dropdown_hover_color = '#ffa87d', text_color = '#000000', command = self.select_frame)
+            self.combobox2.place(x = 300, y = 110)
+
+    def select_frame(self, option_frame):
+        if option_frame == 'Clientes':
+            self.show_frame('Clientes', self.frame_clients)
+        elif option_frame == 'Receitas':
+            self.show_frame('Receitas', self._frame_income)
+        else:
+            self.show_frame('Despesas', self._frame_expenses)
+
+    def hide_combobox2(self):
+        if self.combobox2 is not None:
+            self.combobox2.destroy()
+            self.combobox2 = None
+
+    def show_frame(self, name, frame_func):
+        if name in self.frames:
+            frame = self.frames[name]
+        else:
+            frame = frame_func()
+            frame.place(x = 0, y = 150, relwidth = 1, relheight = 0.75)
+            self.frames[name] = frame
+
+        if self.current_frame:
+            self.current_frame.lower()
+
+        frame.lift()
+        self.current_frame = frame
+
+    def generate_nf(self):
+        url = "https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional%2fDPS%2fPessoas"
+        webbrowser.open(url)
