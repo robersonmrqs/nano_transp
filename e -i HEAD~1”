@@ -1,0 +1,35 @@
+[33mcommit 87b281c108e189cf6021efd1f6415002c46aa148[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Thu Jul 18 18:42:56 2024 -0300
+
+    Initial creation of OptionPage
+
+[33mcommit 01a9ac8e54f59a876f9a78f244bd0ffb4ecbf263[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Thu Jul 18 16:52:33 2024 -0300
+
+    More functions in models.py and creation of the Login and Register views
+
+[33mcommit 57c3165f9b7c440abb2bee3f619ea0b813fc47c8[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Mon Jul 15 23:03:14 2024 -0300
+
+    creating db conn and users table
+
+[33mcommit 4b41b63d78407d80bfbdeb22ab5ef0b1cf6b1972[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Mon Jul 15 22:49:48 2024 -0300
+
+    creating the main file and its functions
+
+[33mcommit cc31321d06fb4ecf18fc9d93522cee8459f1ede3[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Mon Jul 15 22:44:36 2024 -0300
+
+    creating the project tree
+
+[33mcommit 686847cf4969a6840e5c4a2030455b20deeb9325[m
+Author: unknown <robersonmrqs@gmail.com>
+Date:   Mon Jul 15 22:07:51 2024 -0300
+
+    first commit
