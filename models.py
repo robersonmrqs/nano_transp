@@ -32,3 +32,44 @@ def register_user(name, email, username, password):
     cursor.execute('INSERT INTO users (name, email, username, password) VALUES (?, ?, ?, ?)', (name, email, username, password))
     conn.commit()
     conn.close()
+
+def clients_table():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS clients (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, adress TEXT NOT NULL, email REAL NOT NULL, phone TEXT NOT NULL, contact TEXT NOT NULL)''')
+    conn.commit()
+    conn.close()
+
+def execute_query(query, params = (), fetchone = False, fetchall = False):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    result = None
+    if fetchone:
+        result = cursor.fetchone()
+    elif fetchall:
+        result = cursor.fetchall()
+    else:
+        conn.commit()
+    conn.close()
+    return result
+
+def incomes_table():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS incomes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, data TEXT NOT NULL, value REAL NOT NULL, client_id INTEGER NOT NULL, paid INTEGER NOT NULL, voucher BLOB, FOREIGN KEY (client_id) REFERENCES clients(id))''')
+    conn.commit()
+    conn.close()
+
+# def execute_incomes_query(conn, comand, params = (), fetchone = False, fetchall = False):
+#     conn = connect_db()
+#     cursor = conn.cursor()
+#     cursor.execute(comand, params)
+#     if fetchone:
+#         return cursor.fetchone()
+#     elif fetchall:
+#         return cursor.fetchall()
+#     else:
+#         conn.commit()
+#         conn.close()
+#         return None
