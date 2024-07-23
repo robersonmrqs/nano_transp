@@ -7,6 +7,18 @@ def update_time(page):
     page.time_label.configure(text = now)
     page.window.after(1000, update_time, page)
     
+def open_github_profile(self):
+        webbrowser.open('https://github.com/robersonmrqs?tab=repositories')
+
+def clean_widgets(entries, checkbuttons = None, file_path_attr = None, obj = None):
+    for entry in entries:
+        entry.delete(0, 'end')
+    if checkbuttons:
+        for var in checkbuttons:
+            var.set(0)
+    if file_path_attr and obj:
+        setattr(obj, file_path_attr, None)
+
 def validate_email(email):
         return "@" in email
     
