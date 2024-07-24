@@ -2,6 +2,7 @@ import sqlite3
 
 def connect_db():
     conn = sqlite3.connect('nano_transp.db')
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn
 
 def users_table():
@@ -43,14 +44,21 @@ def clients_table():
 def incomes_table():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS incomes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, data TEXT NOT NULL, value REAL NOT NULL, client_id INTEGER NOT NULL, paid INTEGER NOT NULL, voucher BLOB, FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS incomes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, date TEXT NOT NULL, value REAL NOT NULL, client_id INTEGER NOT NULL, paid INTEGER NOT NULL, voucher BLOB, FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE)''')
     conn.commit()
     conn.close()
 
 def expenses_table():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, data TEXT NOT NULL, value REAL NOT NULL, source TEXT NOT NULL, voucher BLOB)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, date TEXT NOT NULL, value REAL NOT NULL, source TEXT NOT NULL, voucher BLOB)''')
+    conn.commit()
+    conn.close()
+
+def fleet_table():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS fleet (id INTEGER PRIMARY KEY AUTOINCREMENT, plate TEXT NOT NULL, color TEXT NOT NULL, brand TEXT NOT NULL, model TEXT NOT NULL, initial REAL NOT NULL, final REAL, mileage REAL, obs TEXT NOT NULL)''')
     conn.commit()
     conn.close()
 

@@ -321,9 +321,9 @@ class OptionPage():
         self.name_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Nome', text_color = '#ffffff').place(x = 45, y = 120)
         self.name_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
         self.name_entry.place(x = 135, y = 115)
-        self.data_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Data', text_color = '#ffffff').place(x = 45, y = 165)
-        self.data_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center', placeholder_text = 'dd/mm/aaaa')
-        self.data_entry.place(x = 135, y = 160)
+        self.date_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Data', text_color = '#ffffff').place(x = 45, y = 165)
+        self.date_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center', placeholder_text = 'dd/mm/aaaa')
+        self.date_entry.place(x = 135, y = 160)
         self.value_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Valor', text_color = '#ffffff').place(x = 45, y = 210)
         self.value_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203')
         self.value_entry.place(x = 135, y = 205)
@@ -333,7 +333,7 @@ class OptionPage():
         self.paid_var = ctk.IntVar()
         self.paid_checkbox = ctk.CTkCheckBox(self.frame, text = 'Pago?', font = ctk.CTkFont('verdana', size = 18), variable = self.paid_var, onvalue = 1, offvalue = 0, text_color = '#ffffff')
         self.paid_checkbox.place(x = 45, y = 307)
-        self.voucher_button = ctk.CTkButton(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 80, height = 30, text = 'Anexar comprovante', fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.select_file).place(x = 135, y = 305)
+        self.voucher_button = ctk.CTkButton(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 80, height = 30, text = 'Anexar comprovante', fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = lambda: select_file(self.textarea_textbox, self)).place(x = 135, y = 305)
         self.generate_nf_button = ctk.CTkButton(self.frame, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), width = 80, text = 'Gerar NF', fg_color = '#ff8040', hover_color = '#ffa87d', text_color = '#ffffff', corner_radius = 14, command = generate_nf).place(x = 350, y = 306)
         self.textarea_textbox = ctk.CTkTextbox(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 410, height = 180, fg_color = '#ffffff', text_color = '#000000')
         self.textarea_textbox.place(x = 45, y = 350)
@@ -341,33 +341,27 @@ class OptionPage():
         incomes_table()
         return self.frame
 
-    def select_file(self):
-        self.file_path = filedialog.askopenfilename()
-        if self.file_path:
-            self.textarea_textbox.insert('1.0', f"Arquivo selecionado: {self.file_path}\n")
-        else:
-            messagebox.showerror(title = 'Cadastro de receita', message = 'Nenhum arquivo selecionado!')
-
     def income_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         client_name = self.client_entry.get().strip()
         paid = self.paid_var.get()
+
+        if not name or not date or not value or not client_name:
+            messagebox.showerror(title = 'Cadastro de receita', message = 'Por favor, preencha todos os campos!')
+            return
+        
         voucher = None
         if self.file_path:
             with open(self.file_path, 'rb') as file:
                 voucher = file.read()
 
-        if not name or not data or not value or not client_name:
-            messagebox.showerror(title = 'Cadastro de receita', message = 'Por favor, preencha todos os campos!')
-            return
-
         client = execute_query('SELECT id FROM clients WHERE name = ?', (client_name,), fetchone = True)
         if client:
             client_id = client[0]
-            execute_query('INSERT INTO incomes (name, data, value, client_id, paid, voucher) VALUES (?, ?, ?, ?, ?, ?)', (name, data, value, client_id, paid, voucher))
+            execute_query('INSERT INTO incomes (name, date, value, client_id, paid, voucher) VALUES (?, ?, ?, ?, ?, ?)', (name, date, value, client_id, paid, voucher))
             messagebox.showinfo(title = 'Cadastro de receita', message = f"Receita '{name}' criada com sucesso!")
             self.clean_income_widgets()
         else:
@@ -376,23 +370,24 @@ class OptionPage():
     def update_income(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         client_name = self.client_entry.get().strip()
         paid = self.paid_var.get()
+
+        if not name or not date or not value or not client_name:
+            messagebox.showerror(title = 'Atualização de receita', message = 'Por favor, preencha todos os campos!')
+            return
+        
         voucher = None
         if self.file_path:
             with open(self.file_path, 'rb') as file:
                 voucher = file.read()
 
-        if not name or not data or not value or not client_name:
-            messagebox.showerror(title = 'Atualização de receita', message = 'Por favor, preencha todos os campos!')
-            return
-
         client = execute_query('SELECT id FROM clients WHERE name = ?', (client_name,), fetchone = True)
         if client:
             client_id = client[0]
-            execute_query('UPDATE incomes SET value = ?, client_id = ?, paid = ?, voucher = ? WHERE name = ? AND data = ?', (value, client_id, paid, voucher, name, data))
+            execute_query('UPDATE incomes SET value = ?, client_id = ?, paid = ?, voucher = ? WHERE name = ? AND date = ?', (value, client_id, paid, voucher, name, date))
             messagebox.showinfo(title = 'Atualização de receita', message = f"Receita '{name}' atualizada com sucesso!")
             self.clean_income_widgets()
         else:
@@ -401,42 +396,45 @@ class OptionPage():
     def income_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
 
-        if not name or not data:
+        if not name or not date:
             messagebox.showerror(title = 'Consultar rceita', message = "Os campos 'Nome' e 'Data' são obrigatórios para consultar!")
             return
 
-        result = execute_query('SELECT * FROM incomes WHERE name = ? AND data = ?', (name, data), fetchall = True)
+        result = execute_query('SELECT * FROM incomes WHERE name = ? AND date = ?', (name, date), fetchall = True)
         if result:
             for row in result:
+                client_id = row[4]
+                client_name_result = execute_query('SELECT name FROM clients WHERE id = ?', (client_id,), fetchone = True)
+                client_name = client_name_result[0] if client_name_result else 'Desconhecido'
                 formatted_value = f"R$ {row[3]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
                 self.textarea_textbox.insert('end', f'Nome: {row[1]}\n')
                 self.textarea_textbox.insert('end', f'Data: {row[2]}\n')
                 self.textarea_textbox.insert('end', f'Valor: {formatted_value}\n')
-                self.textarea_textbox.insert('end', f'Cliente: {row[4]}\n')
+                self.textarea_textbox.insert('end', f'Cliente: {client_name}\n')
                 self.textarea_textbox.insert('end', f"Pago: {'Sim' if row[5] else 'Não'}\n")
                 self.textarea_textbox.insert('end', f"Comprovante: {'Sim' if row[6] else 'Não'}\n\n")
         else:
-            messagebox.showerror(title = 'Consultar receita', message = f"Nenhuma receita encontrada para '{name}' e data '{data}'!")
+            messagebox.showerror(title = 'Consultar receita', message = f"Nenhuma receita encontrada para '{name}' e data '{date}'!")
 
         self.clean_income_widgets()
 
     def delete_income(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
 
-        if not name or not data:
+        if not name or not date:
             messagebox.showerror(title = 'Deletar receita', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
             return
 
-        execute_query('DELETE FROM incomes WHERE nome = ? AND data = ?', (name, data))
-        messagebox.showinfo(title = 'Deletar receita', message = f"Receita '{name}' e data '{data}' deletada com sucesso!")
+        execute_query('DELETE FROM incomes WHERE name = ? AND date = ?', (name, date))
+        messagebox.showinfo(title = 'Deletar receita', message = f"Receita '{name}' e data '{date}' deletada com sucesso!")
         self.clean_income_widgets()
 
     def clean_income_widgets(self):
-        entries = [self.name_entry, self.data_entry, self.value_entry, self.client_entry]
+        entries = [self.name_entry, self.date_entry, self.value_entry, self.client_entry]
         checkbuttons = [self.paid_var]
         clean_widgets(entries, checkbuttons, 'file_path', self)
 
@@ -451,9 +449,9 @@ class OptionPage():
         self.name_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Nome', text_color = '#ffffff').place(x = 45, y = 120)
         self.name_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
         self.name_entry.place(x = 135, y = 115)
-        self.data_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Data', text_color = '#ffffff').place(x = 45, y = 165)
-        self.data_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center', placeholder_text = 'dd/mm/aaaa')
-        self.data_entry.place(x = 135, y = 160)
+        self.date_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Data', text_color = '#ffffff').place(x = 45, y = 165)
+        self.date_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center', placeholder_text = 'dd/mm/aaaa')
+        self.date_entry.place(x = 135, y = 160)
         self.value_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Valor', text_color = '#ffffff').place(x = 45, y = 210)
         self.value_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
         self.value_entry.place(x = 135, y = 205)
@@ -467,62 +465,56 @@ class OptionPage():
         expenses_table()
         return self.frame
 
-    def select_file(self):
-        self.file_path = filedialog.askopenfilename()
-        if self.file_path:
-            self.textarea_textbox.insert('1.0', f'Arquivo selecionado: {self.file_path}\n')
-        else:
-            self.textarea_textbox.delete('1.0', 'end')
-            messagebox.showerror(title = 'Cadastro de despesa', message = 'Nenhum arquivo selecionado!')
-
     def expense_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         source = self.source_entry.get().strip()
+
+        if not name or not date or not value or not source:
+            messagebox.showerror(title = 'Cadastro de despesa', message = 'Por favor, preencha todos os campos!')
+            return
+        
         voucher = None
         if self.file_path:
             with open(self.file_path, 'rb') as file:
                 voucher = file.read()
-
-        if not name or not data or not value or not source:
-            messagebox.showerror(title = 'Cadastro de despesa', message = 'Por favor, preencha todos os campos!')
-            return
         
-        execute_query('INSERT INTO expenses (name, data, value, source, voucher) VALUES (?, ?, ?, ?, ?)', (name, data, value, source, voucher))
+        execute_query('INSERT INTO expenses (name, date, value, source, voucher) VALUES (?, ?, ?, ?, ?)', (name, date, value, source, voucher))
         messagebox.showinfo(title = 'Cadastro de despesa', message = f"Despesa '{name}' criada com sucesso!")
         self.clean_expense_widgets()
 
     def update_expense(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
-        source = self.source_entry.get().strip()   
+        source = self.source_entry.get().strip()
+
+        if not name or not date or not value or not source:
+            messagebox.showerror(title = 'Atualição de despesa', message = 'Por favor, preencha todos os campos!')
+            return
+        
         voucher = None
         if self.file_path:
             with open(self.file_path, 'rb') as file:
                 voucher = file.read()
-
-        if not name or not data or not value or not source:
-            messagebox.showerror(title = 'Atualição de despesa', message = 'Por favor, preencha todos os campos!')
-            return
     
-        execute_query('UPDATE expenses SET value = ?, source = ?, voucher = ? WHERE name = ? AND data = ?', (value, source, voucher, name, data))
+        execute_query('UPDATE expenses SET value = ?, source = ?, voucher = ? WHERE name = ? AND date = ?', (value, source, voucher, name, date))
         messagebox.showinfo(title = 'Atualização de despesa', message = f"Despesa '{name}' atualizada com sucesso!")
         self.clean_expense_widgets()
 
     def expense_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
     
-        if not name or not data:
+        if not name or not date:
             messagebox.showerror(title = 'Consultar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para atualizar!")
             return
 
-        result = execute_query('SELECT * FROM expenses WHERE name = ? AND data = ?', (name, data), fetchall = True)
+        result = execute_query('SELECT * FROM expenses WHERE name = ? AND date = ?', (name, date), fetchall = True)
         if result:
             for row in result:
                 formatted_value = f"R$ {row[3]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
@@ -532,25 +524,25 @@ class OptionPage():
                 self.textarea_textbox.insert('end', f"Fonte: {row[4]}\n")
                 self.textarea_textbox.insert('end', f"Comprovante: {'Sim' if row[5] else 'Não'}\n\n")
         else:
-            messagebox.showerror(title = 'Consultar despesa', message = f"Nenhuma despesa encontrada para '{name}' e data '{data}'!")
+            messagebox.showerror(title = 'Consultar despesa', message = f"Nenhuma despesa encontrada para '{name}' e data '{date}'!")
     
         self.clean_expense_widgets()
 
     def delete_expense(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-        data = self.data_entry.get().strip()
+        date = self.date_entry.get().strip()
     
-        if not name or not data:
+        if not name or not date:
             messagebox.showerror(title = 'Deletar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
             return
         
-        execute_query('DELETE FROM expenses WHERE nome = ? AND data = ?', (name, data))
+        execute_query('DELETE FROM expenses WHERE nome = ? AND date = ?', (name, date))
         messagebox.showinfo(title = 'Deletar despesa', message = f"Despesa '{name}' deletada com sucesso!")
         self.clean_expense_widgets()
 
     def clean_expense_widgets(self):
-        entries = [self.name_entry, self.data_entry, self.value_entry, self.source_entry]
+        entries = [self.name_entry, self.date_entry, self.value_entry, self.source_entry]
         checkbuttons = []
         clean_widgets(entries, checkbuttons, 'file_path', self)
 
@@ -567,3 +559,200 @@ class OptionPage():
 
         frame.lift()
         self.current_frame = frame
+
+class FleetPage():
+    
+    def __init__(self, window, user):
+        self.username = user
+        self.window = ctk.CTkToplevel(window)
+        self.window.title('Fleet Page')
+        self.window.geometry('500x700')
+        self.window.resizable(False, False)
+        self.window.transient(window)
+        self.fleet_frame = ctk.CTkFrame(window)
+
+        self.logo_label = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('static/images/logo_nano_transportes.jpg'), size = (500, 240)), compound = 'top').place(x = 0, y = 0)
+        self.frame = ctk.CTkFrame(self.window, width = 500, height = 570, fg_color = '#000080', corner_radius = 0, bg_color = '#000080').place(x = 0, y = 137)
+        self.text1_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 20), text = 'CONTROLE DE FROTA', text_color = '#ffffff').place(x = 140, y = 145)
+        self.create_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Cadastrar', width = 80, height = 30, fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.fleet_registration).place(x = 45, y = 180)
+        self.update_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Atualizar', width = 80, height = 30, fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.update_fleet).place(x = 157, y = 180)
+        self.read_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Consultar', width = 80, height = 30, fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.fleet_inquiry).place(x = 265, y = 180)
+        self.delete_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Deletar', width = 80, height = 30, fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.delete_fleet).place(x = 375, y = 180)
+        self.plate_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Placa', text_color = '#ffffff').place(x = 10, y = 235)
+        self.plate_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 120, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.plate_entry.place(x = 100, y = 230)
+        self.color_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Cor', text_color = '#ffffff').place(x = 250, y = 235)
+        self.color_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 120, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.color_entry.place(x = 335, y = 230)
+        self.brand_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Marca', text_color = '#ffffff').place(x = 10, y = 278)
+        self.brand_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 120, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.brand_entry.place(x = 100, y = 275)
+        self.model_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Modelo', text_color = '#ffffff').place(x = 250, y = 278)
+        self.model_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 120, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.model_entry.place(x = 335, y = 275)
+        self.initial_km_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Km inicial', text_color = '#ffffff').place(x = 10, y = 323)
+        self.initial_km_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 80, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.initial_km_entry.place(x = 100, y = 320)
+        self.final_km_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Final', text_color = '#ffffff').place(x = 181, y = 323)
+        self.final_km_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 80, height = 30, fg_color = '#ffffff', border_width = 0, text_color = '#010203', justify = 'center')
+        self.final_km_entry.place(x = 225, y = 320)
+        self.mileage_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Rodado', text_color = '#ffffff').place(x = 308, y = 323)
+        self.mileage_textbox = ctk.CTkTextbox(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 80, height = 30, fg_color = '#ffffff', text_color = '#010203')
+        self.mileage_textbox.place(x = 375, y = 320)
+        self.obs_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text ='Observações', text_color = '#ffffff').place(x = 10, y = 375)
+        self.obs_entry = ctk.CTkEntry(self.window, bg_color = '#000080',font = ctk.CTkFont('verdana', size = 18), corner_radius = 0, width = 320, height = 50, fg_color = '#ffffff', border_width = 0, text_color = '#010203')
+        self.obs_entry.place(x = 135, y = 364)
+        self.calculation_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 20), text = 'CÁLCULO DE CONSUMO', text_color = '#ffffff', fg_color = '#000080').place(x = 135, y = 420)
+        self.initial_entry = ctk.CTkEntry(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), width = 100, height = 30, corner_radius = 0, fg_color = '#ffffff', text_color = '#010203', placeholder_text = 'inicial')
+        self.initial_entry.place(x = 10, y = 460)
+        self.final_entry = ctk.CTkEntry(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), width = 100, height = 30, corner_radius = 0, fg_color = '#ffffff', text_color = '#010203', placeholder_text = 'final')
+        self.final_entry.place(x = 135, y = 460)
+        self.liters_entry = ctk.CTkEntry(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), width = 100, height = 30, corner_radius = 0, fg_color = '#ffffff', text_color = '#010203', placeholder_text = 'litros')
+        self.liters_entry.place(x = 260, y = 460)
+        self.calculation_button = ctk.CTkButton(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), text = 'Calcular', width = 80, fg_color = '#ff8040', hover_color = '#ffa87d', text_color = '#ffffff', corner_radius = 14, command = self.calculation).place(x = 385, y = 461)
+        self.textarea_textbox = ctk.CTkTextbox(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 18), width = 400, height = 160, corner_radius = 0, fg_color = '#ffffff', text_color = '#010203')
+        self.textarea_textbox.place(x = 50, y = 500)
+        self.text2_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 14), text = "Made by Rb", text_color = '#ffffff').place(x = 10, y = 670)
+        self.exit_button = ctk.CTkButton(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 16), width = 100, corner_radius = 14, text = 'Sair', fg_color = "#ff0000", hover_color = '#af0850', command = self.window.quit).place(x = 200, y = 670)
+        self.comeback_button = ctk.CTkButton(self.window, font = ctk.CTkFont('verdana', size = 16), text = 'voltar', width = 0, corner_radius = 0, fg_color = '#80ff80', hover_color = '#4dcea7', text_color = '#000000', command = lambda: [self.window.withdraw(), OptionPage(self.window, self.username)]).place(x = 0, y = 0)
+        fleet_table()
+
+    def calculation(self):
+        self.textarea_textbox.delete('1.0', 'end')
+        initial = self.initial_entry.get().strip()
+        final = self.final_entry.get().strip()
+        liters = self.liters_entry.get().strip()
+
+        if not initial or not final or not liters:
+            self.textarea_textbox.insert('1.0', 'Todos os campos são obrigatórios!\n')
+            return
+
+        try:
+            initial = float(initial)
+            final = float(final)
+            liters = float(liters)
+            if final < initial:
+                self.textarea_textbox.insert('1.0', 'O valor final deve ser maior que o valor inicial!\n')
+                return
+
+            mileage = final - initial
+            consumption = mileage / liters
+
+            self.textarea_textbox.insert('1.0', f'Consumo: {consumption:.2f} km/l\n')
+
+        except ValueError:
+            self.textarea_textbox.insert('1.0', 'Por favor, insira valores numéricos válidos!\n')
+
+    def fleet_registration(self):
+        self.textarea_textbox.delete('1.0', 'end')
+        plate = self.plate_entry.get().strip()
+        color = self.color_entry.get().strip()
+        brand = self.brand_entry.get().strip()
+        model = self.model_entry.get().strip()
+        initial_km = self.initial_km_entry.get().strip()
+        final_km = self.final_km_entry.get().strip()
+        mileage = self.mileage_textbox.get('1.0', 'end-1c').strip()
+        obs = self.obs_entry.get().strip()
+
+        if not plate or not color or not brand or not model or not initial_km:
+            self.textarea_textbox.insert('1.0', 'Por favor, preencha todos os campos!\n')
+            return
+
+        result = execute_query('SELECT * FROM fleet WHERE plate = ?', (plate,), fetchone = True)
+        if result:
+            self.textarea_textbox.insert('1.0', f"A placa '{plate}' já está cadastrada!\n")
+            return
+
+        if initial_km:
+            initial_km = float(initial_km)
+        else:
+            self.textarea_textbox.insert('1.0', "O campo 'Km Inicial' é obrigatório!\n")
+            return
+
+        if final_km:
+            final_km = float(final_km)
+            mileage = final_km - initial_km
+            self.mileage_textbox.delete('1.0', 'end')
+            self.mileage_textbox.insert('1.0', str(mileage))
+        else:
+            final_km = None
+            mileage = None
+
+        execute_query('INSERT INTO fleet (plate, color, brand, model, initial, final, mileage, obs) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (plate, color, brand, model, initial_km, final_km, mileage, obs))
+        self.textarea_textbox.insert('1.0', f"Placa '{plate}' cadastrada com sucesso!\n")
+        self.clean_fleet_widgets()
+
+    def update_fleet(self):
+        self.textarea_textbox.delete('1.0', 'end')
+        plate = self.plate_entry.get().strip()
+        color = self.color_entry.get().strip()
+        brand = self.brand_entry.get().strip()
+        model = self.model_entry.get().strip()
+        initial_km = self.initial_km_entry.get().strip()
+        final_km = self.final_km_entry.get().strip()
+        mileage = self.mileage_textbox.get('1.0', 'end-1c').strip()
+        obs = self.obs_entry.get().strip()
+    
+        if not plate or not color or not brand or not model or not initial_km:
+            self.textarea_textbox.insert('1.0', 'Por favor, preencha todos os campos!\n')
+            return
+
+        result = execute_query('SELECT * FROM fleet WHERE plate = ?', (plate,), fetchone = True)
+
+        if not result:
+            self.textarea_textbox.insert('1.0', f"A placa '{plate}' não está cadastrada.\n")
+            return
+
+        if final_km:
+            initial_km = float(initial_km)
+            final_km = float(final_km)
+            mileage = final_km - initial_km
+            self.mileage_textbox.delete('1.0', 'end')
+            self.mileage_textbox.insert('1.0', str(mileage))
+        else:
+            final_km = None
+            mileage = None
+
+        execute_query('UPDATE fleet SET color = ?, brand = ?, model = ?, initial = ?, final = ?, mileage = ?, obs = ? WHERE plate = ?', (color, brand, model, initial_km, final_km, mileage, obs, plate))
+        self.textarea_textbox.insert('1.0', f"Placa '{plate}' atualizada com sucesso!\n")
+        self.clean_fleet_widgets()
+
+    def fleet_inquiry(self):
+        self.textarea_textbox.delete('1.0', 'end')
+        plate = self.plate_entry.get().strip()
+    
+        if not plate:
+            self.textarea_textbox.insert('1.0', "O campo 'Placa' é obrigatório para consultar.\n")
+            return
+    
+        result = execute_query('SELECT * FROM fleet WHERE plate = ?', (plate,), fetchall = True)
+        if result:
+            for row in result:
+                self.textarea_textbox.insert('end', f'Placa: {row[1]}\n')
+                self.textarea_textbox.insert('end', f'Cor: {row[2]}\n')
+                self.textarea_textbox.insert('end', f'Marca: {row[3]}\n')
+                self.textarea_textbox.insert('end', f'Modelo: {row[4]}\n')
+                self.textarea_textbox.insert('end', f'Km inicial: {row[5]}\n')
+                self.textarea_textbox.insert('end', f'Km final: {row[6]}\n')
+                self.textarea_textbox.insert('end', f'Km rodados: {row[7]}\n')
+                self.textarea_textbox.insert('end', f'Observações: {row[8]}\n\n')
+        else:
+            self.textarea_textbox.insert('1.0', f"Nenhuma cadastro encontrado para '{plate}'.\n")
+    
+        self.clean_fleet_widgets()
+
+    def delete_fleet(self):
+        self.textarea_textbox.delete('1.0', 'end')
+        plate = self.plate_entry.get().strip()
+    
+        if not plate:
+            self.textarea_textbox.insert('1.0', "O campo 'Placa' é obrigatório para deletar.\n")
+            return
+    
+        execute_query('DELETE FROM fleet WHERE placa = ?', (plate))
+        self.textarea_textbox.insert('1.0', f"Placa: '{plate}' deletada com sucesso!\n")
+        self.clean_fleet_widgets()
+
+    def clean_fleet_widgets(self):
+        entries = [self.plate_entry, self.color_entry, self.brand_entry, self.model_entry, self.initial_km_entry, self.final_km_entry, self.obs_entry]
+        clean_widgets(entries)
