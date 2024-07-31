@@ -1,13 +1,10 @@
 import customtkinter as ctk
 import re
-import webbrowser
-import tempfile
-import subprocess
 import win32com.client as win32
 from models import *
-from utils import *
 from PIL import Image
 from tkinter import messagebox
+from utils import *
 
 class LoginPage():
 
@@ -27,6 +24,9 @@ class LoginPage():
         self.password_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 24), text = 'Senha', text_color = '#020304').place(x = 30, y = 310)
         self.password_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 440, height = 40, corner_radius = 15, border_width = 0, fg_color = '#e8e9ea', text_color = '#010203', justify = 'center', show = '*')
         self.password_entry.place(x = 30, y = 340)
+        self.show_password_var = ctk.BooleanVar()
+        self.show_password_checkbox = ctk.CTkCheckBox(self.window, font = ctk.CTkFont('verdana', size = 12), text = 'Mostrar senha', variable = self.show_password_var, onvalue = True, offvalue = False, bg_color = '#e8e9ea', text_color = '#000000', hover = False, command = lambda: toggle_password_visibility(self.password_entry, self.show_password_var))
+        self.show_password_checkbox.place(x = 350, y = 348)
         self.recover_password_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Recuperar senha', fg_color = '#ffffff', text_color = '#000000', hover_color = '#ffa87d', command = self.recover_password).place(x = 175, y = 395)
         self.login_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 24), width = 160, height = 45, corner_radius = 22, text = 'LOGIN', fg_color = '#ff8040', hover_color = '#ffa87d', text_color = '#010203', command = self.user_login).place(x = 170, y = 435)
         self.text1_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Não tem uma conta? clique', text_color = '#000000').place(x = 120, y = 490)
@@ -71,7 +71,6 @@ class LoginPage():
         email_message.To = email
         email_message.Subject = 'Recuperação de Senha'
         email_message.HTMLBody = f'<p>Olá,</p><p>Sua senha é: {password}</p><p>Abraços!</p><p>Nano Transportes</p>'
-
         try:
             email_message.Send()
             messagebox.showinfo(title = 'Login de usuário', message = f'Senha enviada com sucesso para {email}!')
@@ -103,6 +102,10 @@ class RegisterPage():
         self.password_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = 'Senha', text_color = '#000000').place(x = 215, y = 395)
         self.password_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 440, height = 36, fg_color = '#e9ebea', corner_radius = 15, border_width = 0, text_color = '#010203', justify = 'center', show = '*')
         self.password_entry.place(x = 30, y = 425)
+        self.password_tooltip = ToolTip(self.password_entry, "A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.")
+        self.show_password_var = ctk.BooleanVar()
+        self.show_password_checkbox = ctk.CTkCheckBox(self.window, font = ctk.CTkFont('verdana', size = 12), text = 'Mostrar senha', variable = self.show_password_var, onvalue = True, offvalue = False, bg_color = '#e8e9ea', text_color = '#000000', hover = False, command = lambda: toggle_password_visibility(self.password_entry, self.show_password_var))
+        self.show_password_checkbox.place(x = 350, y = 430)
         self.confirm_password_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = 'Confirmar senha', text_color = '#000000').place(x = 160, y = 475)
         self.confirm_password_entry = ctk.CTkEntry(self.window,bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 440, height = 36, fg_color = '#e9ebea', corner_radius = 15, border_width = 0, text_color = '#010203', justify = 'center', placeholder_text = 'confirme sua senha', show = '*')
         self.confirm_password_entry.place(x = 30, y = 505)
@@ -116,16 +119,7 @@ class RegisterPage():
         update_time(self)
     
     def check_password(self, password):
-        if len(password) < 8:
-            return False
-        elif re.search('[0-9]', password) is None:
-            return False
-        elif re.search('[A-Z]', password) is None: 
-            return False
-        elif re.search('[^a-zA-Z0-9]', password) is None:
-            return False
-        else:
-            return True
+        return len(password) >= 8 and re.search('[0-9]', password) and re.search('[A-Z]', password) and re.search('[^a-zA-Z0-9]', password)
 
     def user_registration(self):
         name = self.name_entry.get().strip()
@@ -133,7 +127,6 @@ class RegisterPage():
         username = self.username_entry.get().strip()
         password = self.password_entry.get().strip()
         confirm_password = self.confirm_password_entry.get().strip()
-
         if not name or not email or not username or not password or not confirm_password:
             messagebox.showerror(title = 'Cadastro de usuário', message = 'Por favor, preencha todos os campos!')
         elif not validate_email(email):
@@ -179,7 +172,7 @@ class OptionPage():
         if option == 'Cadastrar':
             self.show_combobox2()
         elif option == 'Pesquisar':
-            self.window.withdraw(), QueryPage(self.window, self.username)
+            self.window.withdraw(), QueryPage(self.window, self.username, f'{self.user_db_name}')
         elif option == 'Controle de frota':
             self.window.withdraw(), FleetPage(self.window, self.username, f'{self.user_db_name}')
         else:
@@ -238,7 +231,6 @@ class OptionPage():
         email = self.email_entry.get().strip()
         phone = self.phone_entry.get().strip()
         contact = self.contact_entry.get().strip()
-
         if not name or not address or not email or not phone or not contact:
             messagebox.showerror(title = 'Cadastro de cliente', message = 'Por favor, preencha todos os campos!')
             return
@@ -248,7 +240,7 @@ class OptionPage():
         elif not phone.startswith('55'):
             phone = '55' + phone
         
-        result = execute_query('SELECT * FROM clients WHERE name = ?', (name,), fetchone = True, db_name=self.user_db_name)  
+        result = execute_query('SELECT * FROM clients WHERE name = ?', (name,), fetchone = True, db_name = self.user_db_name)  
         if result:
             messagebox.showerror(title = 'Cadastro de cliente', message = f'Cliente {name} já cadastrado!')
             return
@@ -264,7 +256,6 @@ class OptionPage():
         email = self.email_entry.get().strip()
         phone = self.phone_entry.get().strip()
         contact = self.contact_entry.get().strip()
-    
         if not name or not address or not email or not phone or not contact:
             messagebox.showerror(title = 'Atualização de cliente', message = 'Por favor, preencha todos os campos!')
             return
@@ -281,7 +272,6 @@ class OptionPage():
     def customer_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-    
         if not name:
             self.textarea_textbox.insert('1.0', "O campo 'Nome' é obrigatório para consultar.\n")
 
@@ -301,7 +291,6 @@ class OptionPage():
     def delete_client(self):
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
-    
         if not name:
             self.textarea_textbox.insert('1.0', "O campo 'Nome' é obrigatório para deletar.\n")
         else:
@@ -351,7 +340,6 @@ class OptionPage():
         value = self.value_entry.get().strip()
         client_name = self.client_entry.get().strip()
         paid = self.paid_var.get()
-
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Cadastro de receita', message = 'Por favor, preencha todos os campos!')
             return
@@ -377,7 +365,6 @@ class OptionPage():
         value = self.value_entry.get().strip()
         client_name = self.client_entry.get().strip()
         paid = self.paid_var.get()
-
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Atualização de receita', message = 'Por favor, preencha todos os campos!')
             return
@@ -400,7 +387,6 @@ class OptionPage():
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
         date = self.date_entry.get().strip()
-
         if not name or not date:
             messagebox.showerror(title = 'Consultar rceita', message = "Os campos 'Nome' e 'Data' são obrigatórios para consultar!")
             return
@@ -411,7 +397,7 @@ class OptionPage():
                 client_id = row[4]
                 client_name_result = execute_query('SELECT name FROM clients WHERE id = ?', (client_id,), fetchone = True, db_name = self.user_db_name)
                 client_name = client_name_result[0] if client_name_result else 'Desconhecido'
-                formatted_value = f"R$ {row[3]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+                formatted_value = format_currency(row[3])
                 self.textarea_textbox.insert('end', f'Nome: {row[1]}\n')
                 self.textarea_textbox.insert('end', f'Data: {row[2]}\n')
                 self.textarea_textbox.insert('end', f'Valor: {formatted_value}\n')
@@ -427,7 +413,6 @@ class OptionPage():
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
         date = self.date_entry.get().strip()
-
         if not name or not date:
             messagebox.showerror(title = 'Deletar receita', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
             return
@@ -474,7 +459,6 @@ class OptionPage():
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         source = self.source_entry.get().strip()
-
         if not name or not date or not value or not source:
             messagebox.showerror(title = 'Cadastro de despesa', message = 'Por favor, preencha todos os campos!')
             return
@@ -494,7 +478,6 @@ class OptionPage():
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         source = self.source_entry.get().strip()
-
         if not name or not date or not value or not source:
             messagebox.showerror(title = 'Atualição de despesa', message = 'Por favor, preencha todos os campos!')
             return
@@ -512,7 +495,6 @@ class OptionPage():
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
         date = self.date_entry.get().strip()
-    
         if not name or not date:
             messagebox.showerror(title = 'Consultar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para atualizar!")
             return
@@ -520,7 +502,7 @@ class OptionPage():
         result = execute_query('SELECT * FROM expenses WHERE name = ? AND date = ?', (name, date), fetchall = True, db_name = self.user_db_name)
         if result:
             for row in result:
-                formatted_value = f"R$ {row[3]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+                formatted_value = format_currency(row[3])
                 self.textarea_textbox.insert('end', f"Nome: {row[1]}\n")
                 self.textarea_textbox.insert('end', f"Data: {row[2]}\n")
                 self.textarea_textbox.insert('end', f"Valor: {formatted_value}\n")
@@ -535,7 +517,6 @@ class OptionPage():
         self.textarea_textbox.delete('1.0', 'end')
         name = self.name_entry.get().strip().lower()
         date = self.date_entry.get().strip()
-    
         if not name or not date:
             messagebox.showerror(title = 'Deletar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
             return
@@ -619,6 +600,9 @@ class FleetPage():
         self.text2_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 14), text = "Made by Rb", text_color = '#ffffff').place(x = 10, y = 670)
         self.exit_button = ctk.CTkButton(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 16), width = 100, corner_radius = 14, text = 'Sair', fg_color = "#ff0000", hover_color = '#af0850', command = self.window.quit).place(x = 200, y = 670)
         self.comeback_button = ctk.CTkButton(self.window, font = ctk.CTkFont('verdana', size = 16), text = 'voltar', width = 0, corner_radius = 0, fg_color = '#80ff80', hover_color = '#4dcea7', text_color = '#000000', command = lambda: [self.window.withdraw(), OptionPage(self.window, self.username, self.user_db_name)]).place(x = 0, y = 0)
+        self.time_label = ctk.CTkLabel(self.window, font = ctk.CTkFont('verdana', size = 10), text = '', text_color = '#ffffff')
+        self.time_label.place(x = 390, y = 0)
+        update_time(self)
         fleet_table(self.user_db_name)
 
     def calculation(self):
@@ -626,7 +610,6 @@ class FleetPage():
         initial = self.initial_entry.get().strip()
         final = self.final_entry.get().strip()
         liters = self.liters_entry.get().strip()
-
         if not initial or not final or not liters:
             self.textarea_textbox.insert('1.0', 'Todos os campos são obrigatórios!\n')
             return
@@ -641,9 +624,7 @@ class FleetPage():
 
             mileage = final - initial
             consumption = mileage / liters
-
             self.textarea_textbox.insert('1.0', f'Consumo: {consumption:.2f} km/l\n')
-
         except ValueError:
             self.textarea_textbox.insert('1.0', 'Por favor, insira valores numéricos válidos!\n')
 
@@ -657,7 +638,6 @@ class FleetPage():
         final_km = self.final_km_entry.get().strip()
         mileage = self.mileage_textbox.get('1.0', 'end-1c').strip()
         obs = self.obs_entry.get().strip()
-
         if not plate or not color or not brand or not model or not initial_km:
             self.textarea_textbox.insert('1.0', 'Por favor, preencha todos os campos!\n')
             return
@@ -696,13 +676,11 @@ class FleetPage():
         final_km = self.final_km_entry.get().strip()
         mileage = self.mileage_textbox.get('1.0', 'end-1c').strip()
         obs = self.obs_entry.get().strip()
-    
         if not plate or not color or not brand or not model or not initial_km:
             self.textarea_textbox.insert('1.0', 'Por favor, preencha todos os campos!\n')
             return
 
         result = execute_query('SELECT * FROM fleet WHERE plate = ?', (plate,), fetchone = True, db_name = self.user_db_name)
-
         if not result:
             self.textarea_textbox.insert('1.0', f"A placa '{plate}' não está cadastrada.\n")
             return
@@ -724,7 +702,6 @@ class FleetPage():
     def fleet_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
         plate = self.plate_entry.get().strip()
-    
         if not plate:
             self.textarea_textbox.insert('1.0', "O campo 'Placa' é obrigatório para consultar.\n")
             return
@@ -748,7 +725,6 @@ class FleetPage():
     def delete_fleet(self):
         self.textarea_textbox.delete('1.0', 'end')
         plate = self.plate_entry.get().strip()
-    
         if not plate:
             self.textarea_textbox.insert('1.0', "O campo 'Placa' é obrigatório para deletar.\n")
             return
@@ -763,8 +739,9 @@ class FleetPage():
 
 class QueryPage():
     
-    def __init__(self, window, user):
+    def __init__(self, window, user, user_db_name):
         self.username = user
+        self.user_db_name = user_db_name
         self.window = ctk.CTkToplevel(window)
         self.window.title('Search Page')
         self.window.geometry('800x450')
@@ -785,164 +762,161 @@ class QueryPage():
         self.third_textbox = None
         self.text3_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 14), text = "Made by Rb", text_color = '#0080ff').place(x = 10, y = 420)
         self.exit_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Sair', width = 100, corner_radius = 14, fg_color = "#ff0000", hover_color = '#af0850', command = self.window.quit).place(x = 180, y = 420)
-        self.comeback_button = ctk.CTkButton(self.window, font = ctk.CTkFont('verdana', size = 16), text = 'voltar', width = 0, corner_radius = 0, fg_color = '#80ff80', hover_color = '#4dcea7', text_color = '#000000', command = lambda: [self.window.withdraw(), OptionPage(self.window, self.username)]).place(x = 0, y = 0)
+        self.comeback_button = ctk.CTkButton(self.window, font = ctk.CTkFont('verdana', size = 16), text = 'voltar', width = 0, corner_radius = 0, fg_color = '#80ff80', hover_color = '#4dcea7', text_color = '#000000', command = lambda: [self.window.withdraw(), OptionPage(self.window, self.username, user_db_name)]).place(x = 0, y = 0)
+        self.time_label = ctk.CTkLabel(self.window, font = ctk.CTkFont('verdana', size = 10), text = '', text_color = '#ffffff')
+        self.time_label.place(x = 90, y = 370)
+        update_time(self)
         self.window.bind('<Return>', lambda event = None: self.query())
 
     def query(self):
-        termo_pesquisa = self.query_entry.get().strip().lower()
-        if not termo_pesquisa:
+        term_consulted = self.query_entry.get().strip().lower()
+        if not term_consulted:
             return
         
-        conn = sqlite3.connect('nano_transp.db')
-        cursor = conn.cursor()
-        if termo_pesquisa in ['clientes', 'receitas', 'despesas', 'frota']:
-            consultas = {'clientes': 'SELECT * FROM clients',
-                         'receitas': 'SELECT * FROM incomes',
-                         'despesas': 'SELECT * FROM expenses',
-                         'frota': 'SELECT * FROM fleet'}
-
-            if termo_pesquisa in consultas:
-                consulta_sql = consultas[termo_pesquisa]
-                cursor.execute(consulta_sql)
-                resultados = cursor.fetchall()
-                self.mostrar_resultados(resultados, termo_pesquisa)
+        found_results = False
+        querys = {'clientes': 'SELECT * FROM clients', 'receitas': 'SELECT * FROM incomes', 'despesas': 'SELECT * FROM expenses', 'frota': 'SELECT * FROM fleet'}
+        if term_consulted in querys:
+            query_sql = querys[term_consulted]
+            results = execute_query(query_sql, fetchall = True, db_name = self.user_db_name)
+            if results:
+                found_results = True
+                self.show_results(results, term_consulted)
         else:
-            tabelas_colunas = {'clients': 'name',
-                               'incomes': 'name',
-                               'expenses': 'name',
-                               'fleet': 'plate'}
-
-            for tabela, coluna in tabelas_colunas.items():
-                cursor.execute(f'SELECT * FROM {tabela} WHERE {coluna} LIKE ?', ('%' + termo_pesquisa + '%',))
-                resultados = cursor.fetchall()
-                if resultados:
-                    self.mostrar_resultados_especificos_relacionados(resultados, termo_pesquisa)
-                    if tabela == 'clients':
-                        cursor.execute('SELECT * FROM incomes WHERE client_id IN (SELECT id FROM clients WHERE name LIKE ?)', ('%' + termo_pesquisa + '%',))
-                        receitas_resultados = cursor.fetchall()
-                        self.mostrar_resultados_relacionados(receitas_resultados)
+            tables_columns = {'clients': 'name', 'incomes': 'name', 'expenses': 'name', 'fleet': 'plate'}
+            for table, column in tables_columns.items():
+                results = execute_query(f'SELECT * FROM {table} WHERE {column} = ?', (term_consulted,), fetchall = True, db_name = self.user_db_name)
+                if results:
+                    found_results = True
+                    self.show_specific_related_results(results, term_consulted)
+                    if table == 'clients':
+                        incomes_results = execute_query('SELECT * FROM incomes WHERE client_id IN (SELECT id FROM clients WHERE name LIKE ?)', (term_consulted,), fetchall = True, db_name = self.user_db_name)
+                        self.show_related_results(incomes_results)
                     break
-        conn.close()
+        
+        if not found_results:
+            messagebox.showerror(title = 'Página de pesquisa', message = f"Nenhuma pesquisa encontrada para '{term_consulted}'!")
 
-    def mostrar_resultados(self, resultados, tipo):
+    def show_results(self, results, type):
         if not self.first_textbox:
             self.first_textbox = ctk.CTkTextbox(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 150, height = 150, corner_radius = 0, border_width = 1, fg_color = '#f4f4f4', text_color = '#000000')
             self.first_textbox.place(x = 300, y = 15)
             self.first_textbox.bind('<Button-1>', lambda e: self.on_click(e))
 
         self.first_textbox.delete('1.0', 'end')
-        for row in resultados:
-            item_nome = f'{row[0]} - {row[1]}'
-            self.first_textbox.insert('end', f'{item_nome}\n')
-            self.first_textbox.tag_add(f'{item_nome}', f'insert -1l linestart', 'insert -1l lineend')
-            self.first_textbox.tag_bind(f'{item_nome}', '<Button-1>', lambda e, r = row, t = tipo: self.mostrar_resultados_especificos_relacionados([r], t))
+        for row in results:
+            item_name = f'{row[0]} - {row[1]}'
+            self.first_textbox.insert('end', f'{item_name}\n')
+            self.first_textbox.tag_add(f'{item_name}', f'insert -1l linestart', 'insert -1l lineend')
+            self.first_textbox.tag_bind(f'{item_name}', '<Button-1>', lambda e, r = row, t = type: self.show_specific_related_results([r], t))
 
-    def mostrar_resultados_especificos_relacionados(self, resultados, tipo):
+    def show_specific_related_results(self, results, type):
         if not self.second_textbox:
             self.second_textbox = ctk.CTkTextbox(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 300, height = 150, corner_radius = 0, border_width = 1, fg_color = '#f4f4f4', text_color = '#020304')
             self.second_textbox.place(x = 490, y = 15)
             self.second_textbox.bind('<Button-1>', self.on_click)
         
         self.second_textbox.delete('1.0', 'end')
-        processed_ids = set()
-        for row in resultados:
-            for i, value in enumerate(row):
-                if tipo == 'clientes' and i == 4:
-                    telefone = value
-                    telefone_link = f'whatsapp://send?phone = {telefone}'
-                    self.second_textbox.insert('end', f'{telefone}\n', ('link',))
+        
+        def insert_client_data(row):
+            telephone = row[4]
+            labels = ['Nome', 'Endereço', 'E-mail', 'Telefone', 'Contato']
+            values = [row[1], row[2], row[3], telephone, row[5]]
+            for label, value in zip(labels, values):
+                if label == 'Telefone':
+                    self.second_textbox.insert('end', f'{label}: {value}\n', ('link',))
                     self.second_textbox.tag_config('link', foreground = 'blue', underline = True)
-                    self.second_textbox.tag_bind('link', '<Button-1>', lambda e, tel = telefone_link: self.abrir_whatsapp(tel))
-                elif tipo == 'receitas': 
-                    for receita in resultados:
-                        cliente_id = receita[4]
-                        nome_cliente = self.obter_nome_cliente(cliente_id)
-                        self.second_textbox.insert('end', f'Nome: {row[1]}\n')
-                        self.second_textbox.insert('end', f'Data: {row[2]}\n')
-                        self.second_textbox.insert('end', f'Valor: {row[3]}\n')
-                        self.second_textbox.insert('end', f'Cliente: {nome_cliente}\n')
-                        self.second_textbox.insert('end', f"Pago: {'Sim' if row[5] else 'Não'}\n")
-                        self.second_textbox.insert('end', f"Comprovante: {'Sim' if row[6] else 'Não'}\n\n")
-                elif tipo == 'despesas':
-                    if row[0] not in processed_ids:
-                        processed_ids.add(row[0])
-                        self.second_textbox.insert('end', f'Nome: {row[1]}\n')
-                        self.second_textbox.insert('end', f'Data: {row[2]}\n')
-                        self.second_textbox.insert('end', f'Valor: {row[3]}\n')
-                        self.second_textbox.insert('end', f'Fonte: {row[4]}\n')
-                        self.second_textbox.insert('end', f"Comprovante: {'Sim' if row[5] else 'Não'}\n\n")
-                elif tipo == 'frota':
-                    if row[0] not in processed_ids:
-                        processed_ids.add(row[0])
-                        self.second_textbox.insert('end', f'Placa: {row[1]}\n')
-                        self.second_textbox.insert('end', f'Cor: {row[2]}\n')
-                        self.second_textbox.insert('end', f'Marca: {row[3]}\n')
-                        self.second_textbox.insert('end', f'Modelo: {row[4]}\n')
-                        self.second_textbox.insert('end', f'Km inicial: {row[5]}\n')
-                        self.second_textbox.insert('end', f'Km final: {row[6]}\n')
-                        self.second_textbox.insert('end', f'Km rodados: {row[7]}\n')
-                        self.second_textbox.insert('end', f'Observações: {row[8]}\n\n')
+                    self.second_textbox.tag_bind('link', '<Button-1>', lambda e, tel = telephone: open_whatsapp(tel))
                 else:
-                    self.second_textbox.insert('end', f'{value}\n')
+                    self.second_textbox.insert('end', f'{label}: {value}\n')
 
-            if tipo == 'clientes':
-                cliente_id = resultados[0][0]
-                conn = sqlite3.connect('nano_transp.db')
-                cursor = conn.cursor()
-                cursor.execute('SELECT * FROM incomes WHERE client_id = ?', (cliente_id,))
-                receitas_resultados = cursor.fetchall()
-                self.mostrar_resultados_relacionados(receitas_resultados)
-                conn.close()
+            self.second_textbox.insert('end', '\n')
+            cliente_id = row[0]
+            incomes_results = execute_query('SELECT * FROM incomes WHERE client_id = ?', (cliente_id,), fetchall = True, db_name = self.user_db_name)
+            self.show_related_results(incomes_results)
 
-    def obter_nome_cliente(self, cliente_id):
-        conn = sqlite3.connect('nano_transp.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT name FROM clients WHERE id = ?', (cliente_id,))
-        resultado = cursor.fetchone()
-        conn.close()
-        return resultado[0] if resultado else 'Desconhecido'
+        def insert_income_data(row):
+            labels = ['Nome', 'Data', 'Valor', 'Cliente', 'Pago', 'Comprovante']
+            formatted_value = format_currency(row[3])
+            cliente_id = row[4]
+            nome_cliente = (execute_query('SELECT name FROM clients WHERE id = ?', (cliente_id,), fetchone = True, db_name = self.user_db_name) or ['Desconhecido'])[0]
+            data = [row[1], row[2], formatted_value, nome_cliente, 'Sim' if row[5] else 'Não', 'Sim' if row[6] else 'Não']
+            for label, value in zip(labels, data):
+                self.second_textbox.insert('end', f'{label}: {value}\n')
+    
+            self.second_textbox.insert('end', '\n')
 
-    def mostrar_resultados_relacionados(self, resultados):
+        def insert_expense_data(row):
+            labels = ['Nome', 'Data', 'Valor', 'Fonte', 'Comprovante']
+            data = [row[1], row[2], format_currency(row[3]), row[4], 'Sim' if row[5] else 'Não']
+            for label, value in zip(labels, data):
+                self.second_textbox.insert('end', f'{label}: {value}\n')
+    
+        self.second_textbox.insert('end', '\n')
+
+        def insert_fleet_data(row):
+            labels = ['Placa', 'Cor', 'Marca', 'Modelo', 'Km inicial', 'Km final', 'Km rodados', 'Observações']
+            for label, data in zip(labels, row[1:]):
+                self.second_textbox.insert('end', f'{label}: {data}\n')
+    
+            self.second_textbox.insert('end', '\n')
+
+        type_mapping = {'clientes': insert_client_data, 'receitas': insert_income_data, 'despesas': insert_expense_data, 'frota': insert_fleet_data}
+
+        if type in type_mapping:
+            for row in results:
+                type_mapping[type](row)
+        else:
+            specific_clients_results = execute_query('SELECT * FROM clients WHERE name = ?', (type,), fetchall = True, db_name = self.user_db_name)
+            specific_income_results = execute_query('SELECT * FROM incomes WHERE name = ?', (type,), fetchall = True, db_name = self.user_db_name)
+            specific_expense_results = execute_query('SELECT * FROM expenses WHERE name = ?', (type,), fetchall = True, db_name = self.user_db_name)
+            specific_fleet_results = execute_query('SELECT * FROM fleet WHERE plate = ?', (type,), fetchall = True, db_name = self.user_db_name)
+
+            if specific_clients_results:
+                for row in specific_clients_results:
+                    insert_client_data(row)
+            elif specific_income_results:
+                for row in specific_income_results:
+                    insert_income_data(row)
+            elif specific_expense_results:
+                for row in specific_expense_results:
+                    insert_expense_data(row)
+            elif specific_fleet_results:
+                for row in specific_fleet_results:
+                    insert_fleet_data(row)
+            else:
+                for row in results:
+                    for value in row:
+                        self.second_textbox.insert('end', f'{value}\n')
+
+    def show_related_results(self, results):
         if not self.third_textbox:
             self.third_textbox = ctk.CTkTextbox(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 490, height = 250, corner_radius = 0, border_width = 1, fg_color = '#f4f4f4', text_color = '#000000')
             self.third_textbox.place(x = 300, y = 190)
             self.third_textbox.bind("<Button-1>", self.on_click)
         
         self.third_textbox.delete('1.0', 'end')
-        for resultado in resultados:
-            id = resultado[0]
-            nome_receita = resultado[1]
-            data = resultado[2]
-            valor = resultado[3]
-            pago = resultado[5]
-            comprovante = resultado[6]
-            status_recebimento = "pago" if pago == 1 else "a receber"
-    
-            if pago == 0:
-                self.third_textbox.insert('end', f'{id}, {nome_receita}, {data}, {valor}, ')
-                self.third_textbox.insert('end', f'{status_recebimento}', ('vermelho', 'link-calculadora'))
+        for result in results:
+            id = result[0]
+            name = result[1]
+            date = result[2]
+            value = result[3]
+            paid = result[5]
+            voucher = result[6]
+            status = "pago" if paid == 1 else "a receber"
+            formatted_value = format_currency(value)
+            if paid == 0:
+                self.third_textbox.insert('end', f'{id} - {name} - {date} - {formatted_value} - ')
+                self.third_textbox.insert('end', f'{status}', ('link-calculadora'))
                 self.third_textbox.tag_config('link-calculadora', foreground = 'red', underline = True)
-                self.third_textbox.tag_bind('link-calculadora', '<Button-1>', lambda e: self.abrir_calculadora())
+                self.third_textbox.tag_bind('link-calculadora', '<Button-1>', lambda e: open_calculator())
             else:
-                self.third_textbox.insert('end', f'{id}, {nome_receita}, {data}, {valor}, {status_recebimento}')
+                self.third_textbox.insert('end', f'{id} - {name} - {date} - {formatted_value} - {status}')
         
-            if comprovante:
-                self.third_textbox.insert('end', ', ')
+            if voucher:
+                self.third_textbox.insert('end', ' - ')
                 self.third_textbox.insert('end', f'Comprovante\n', ('link',))
                 self.third_textbox.tag_config('link', foreground = 'blue', underline = True)
-                self.third_textbox.tag_bind('link', '<Button-1>', lambda e, blob = comprovante: self.abrir_comprovante(blob))
-
-    def abrir_whatsapp(self, telefone_link):
-        webbrowser.open(telefone_link)
-
-    def abrir_comprovante(self, blob_data):
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        temp_file.close()
-        save_blob_to_file(blob_data, temp_file.name)
-        webbrowser.open(temp_file.name)
-
-    def abrir_calculadora(self):
-        subprocess.Popen(['calc.exe'])
+                self.third_textbox.tag_bind('link', '<Button-1>', lambda e, blob = voucher: open_voucher(blob))
 
     def on_click(self, event):
         widget = event.widget
@@ -951,9 +925,7 @@ class QueryPage():
         widget.configure(state = 'disabled')
 
     def clear_query(self):
-        if self.query_entry:
-            self.query_entry.delete(0, 'end')
-
+        self.query_entry.delete(0, 'end')
         textboxes = [self.first_textbox, self.second_textbox, self.third_textbox]
         for textbox in textboxes:
             if textbox:

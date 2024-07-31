@@ -23,7 +23,7 @@ def register_user(name, email, username, password):
     user_conn.close()
     init_user_db(user_db_name)
 
-def get_user_details(username=None, email=None):
+def get_user_details(username = None, email = None):
     conn = connect_db()
     cursor = conn.cursor()
     if username:
