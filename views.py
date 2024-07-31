@@ -16,7 +16,7 @@ class LoginPage():
         self.login_frame = ctk.CTkFrame(window)
         users_table()
 
-        self.logo = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('static/images/logo_nano_transportes.jpg'), size = (500, 285)), compound = 'top', height = 0, text = '').place(x = 0, y = 0)
+        self.logo = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('logo_nano_transportes.jpg'), size = (500, 285)), compound = 'top', height = 0, text = '').place(x = 0, y = 0)
         self.frame = ctk.CTkFrame(self.window, bg_color = '#fdfdfd', width = 500, height = 515, fg_color = '#ffffff').place(x = 0, y = 185)
         self.username_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 24), text = 'Usuário', text_color = '#020304').place(x = 30, y = 220)
         self.username_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 440, height = 40, corner_radius = 15, border_width = 0, fg_color = '#e8e9ea', text_color = '#010203', justify = 'center')
@@ -87,7 +87,7 @@ class RegisterPage():
         self.window.transient(window)
         self.register_frame = ctk.CTkFrame(window)
         
-        self.logo = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('static/images/logo_nano_transportes.jpg'), size = (500, 220)), compound = 'top').place(x = 0, y = 0)
+        self.logo = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('logo_nano_transportes.jpg'), size = (500, 220)), compound = 'top').place(x = 0, y = 0)
         self.frame = ctk.CTkFrame(self.window, width = 500, height = 600, fg_color = '#ffffff').place(x = 0, y = 125)
         self.text1_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 12), text = '*Todos os campos são obrigatórios', text_color = '#e1031e').place(x = 30, y = 130)
         self.name_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = 'Nome', text_color = '#000000').place(x = 210, y = 160)
@@ -226,7 +226,7 @@ class OptionPage():
 
     def customer_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         address = self.address_entry.get().strip()
         email = self.email_entry.get().strip()
         phone = self.phone_entry.get().strip()
@@ -251,7 +251,7 @@ class OptionPage():
 
     def update_client(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         address = self.address_entry.get().strip()
         email = self.email_entry.get().strip()
         phone = self.phone_entry.get().strip()
@@ -271,7 +271,7 @@ class OptionPage():
 
     def customer_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         if not name:
             self.textarea_textbox.insert('1.0', "O campo 'Nome' é obrigatório para consultar.\n")
 
@@ -290,7 +290,7 @@ class OptionPage():
 
     def delete_client(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         if not name:
             self.textarea_textbox.insert('1.0', "O campo 'Nome' é obrigatório para deletar.\n")
         else:
@@ -335,10 +335,10 @@ class OptionPage():
 
     def income_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
-        client_name = self.client_entry.get().strip()
+        client_name = self.client_entry.get().strip().lower()
         paid = self.paid_var.get()
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Cadastro de receita', message = 'Por favor, preencha todos os campos!')
@@ -360,10 +360,10 @@ class OptionPage():
 
     def update_income(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
-        client_name = self.client_entry.get().strip()
+        client_name = self.client_entry.get().strip().lower()
         paid = self.paid_var.get()
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Atualização de receita', message = 'Por favor, preencha todos os campos!')
@@ -385,7 +385,7 @@ class OptionPage():
 
     def income_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         if not name or not date:
             messagebox.showerror(title = 'Consultar rceita', message = "Os campos 'Nome' e 'Data' são obrigatórios para consultar!")
@@ -411,7 +411,7 @@ class OptionPage():
 
     def delete_income(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         if not name or not date:
             messagebox.showerror(title = 'Deletar receita', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
@@ -455,7 +455,7 @@ class OptionPage():
 
     def expense_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         source = self.source_entry.get().strip()
@@ -474,7 +474,7 @@ class OptionPage():
 
     def update_expense(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
         source = self.source_entry.get().strip()
@@ -493,7 +493,7 @@ class OptionPage():
 
     def expense_inquiry(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         if not name or not date:
             messagebox.showerror(title = 'Consultar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para atualizar!")
@@ -515,7 +515,7 @@ class OptionPage():
 
     def delete_expense(self):
         self.textarea_textbox.delete('1.0', 'end')
-        name = self.name_entry.get().strip().lower()
+        name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         if not name or not date:
             messagebox.showerror(title = 'Deletar despesa', message = "Os campos 'Nome' e 'Data' são obrigatórios para deletar!")
@@ -556,7 +556,7 @@ class FleetPage():
         self.window.transient(window)
         self.fleet_frame = ctk.CTkFrame(window)
 
-        self.logo_label = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('static/images/logo_nano_transportes.jpg'), size = (500, 240)), compound = 'top').place(x = 0, y = 0)
+        self.logo_label = ctk.CTkLabel(self.window, image = ctk.CTkImage(Image.open('logo_nano_transportes.jpg'), size = (500, 240)), compound = 'top').place(x = 0, y = 0)
         self.frame = ctk.CTkFrame(self.window, width = 500, height = 570, fg_color = '#000080', corner_radius = 0, bg_color = '#000080').place(x = 0, y = 137)
         self.text1_label = ctk.CTkLabel(self.window, bg_color = '#000080', font = ctk.CTkFont('verdana', size = 20), text = 'CONTROLE DE FROTA', text_color = '#ffffff').place(x = 140, y = 145)
         self.create_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), text = 'Cadastrar', width = 80, height = 30, fg_color = '#ffffff', text_color = '#000000', hover_color = '#e8e9ea', command = self.fleet_registration).place(x = 45, y = 180)
@@ -630,7 +630,7 @@ class FleetPage():
 
     def fleet_registration(self):
         self.textarea_textbox.delete('1.0', 'end')
-        plate = self.plate_entry.get().strip()
+        plate = self.plate_entry.get().strip().lower()
         color = self.color_entry.get().strip()
         brand = self.brand_entry.get().strip()
         model = self.model_entry.get().strip()
@@ -668,7 +668,7 @@ class FleetPage():
 
     def update_fleet(self):
         self.textarea_textbox.delete('1.0', 'end')
-        plate = self.plate_entry.get().strip()
+        plate = self.plate_entry.get().strip().lower()
         color = self.color_entry.get().strip()
         brand = self.brand_entry.get().strip()
         model = self.model_entry.get().strip()
@@ -750,12 +750,12 @@ class QueryPage():
         self.query_frame = ctk.CTkFrame(window)
 
         self.frame = ctk.CTkFrame(self.window, width = 1000, height = 600, corner_radius = 0, fg_color = '#ffffff').place(x = 0, y = 0)
-        self.logo_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', image = ctk.CTkImage(Image.open('static/images/logo_nano_transportes_menor.jpg'), size = (300, 180)), compound = 'left').place(x = 0, y = 175)
+        self.logo_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', image = ctk.CTkImage(Image.open('logo_nano_transportes_menor.jpg'), size = (300, 180)), compound = 'left').place(x = 0, y = 175)
         self.text1_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = 'Ola,', text_color = '#000000').place(x = 90, y = 20)
         self.user_label = ctk.CTkLabel(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 20), text = f' {self.username}', text_color = '#d70428').place(x = 130, y = 20)
         self.query_entry = ctk.CTkEntry(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 14), width = 225, height = 40, corner_radius = 20, fg_color = '#ffffff', border_color = '#000000', text_color = '#000000', placeholder_text = 'pesquisar ...')
         self.query_entry.place(x = 40, y = 67)
-        self.query_button = ctk.CTkButton(self.window, bg_color = '#ffffff', image = ctk.CTkImage(Image.open('static/images/icone_pesquisar.jpg'), size = (38, 24)), width = 0, height = 0, corner_radius = 0, text = '', fg_color = '#ffffff', hover_color = '#ffffff', compound = 'right', command = self.query).place(x = 195, y = 70)
+        self.query_button = ctk.CTkButton(self.window, bg_color = '#ffffff', image = ctk.CTkImage(Image.open('icone_pesquisar.jpg'), size = (38, 24)), width = 0, height = 0, corner_radius = 0, text = '', fg_color = '#ffffff', hover_color = '#ffffff', compound = 'right', command = self.query).place(x = 195, y = 70)
         self.clear_button = ctk.CTkButton(self.window, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 16), width = 100, corner_radius = 14, text = 'Limpar pesquisa', fg_color = '#191970', hover_color = '#0000FF', command = self.clear_query).place(x = 70, y = 135)
         self.first_textbox = None
         self.second_textbox = None
@@ -769,7 +769,7 @@ class QueryPage():
         self.window.bind('<Return>', lambda event = None: self.query())
 
     def query(self):
-        term_consulted = self.query_entry.get().strip().lower()
+        term_consulted = treat_entry(self.query_entry.get())
         if not term_consulted:
             return
         

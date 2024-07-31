@@ -4,6 +4,7 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from tkinter import filedialog, messagebox
+from unidecode import unidecode
 
 class ToolTip:
 
@@ -43,6 +44,10 @@ def toggle_password_visibility(entry, show_password_var):
         entry.configure(show = '')
     else:
         entry.configure(show = '*')
+
+def treat_entry(text):
+    """Remove leading/trailing whitespace, converts to lowercase, and removes accents."""
+    return unidecode(text.strip().lower())
 
 def clean_widgets(entries, checkbuttons = None, file_path_attr = None, obj = None):
     for entry in entries:
