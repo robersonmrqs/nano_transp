@@ -320,8 +320,10 @@ class OptionPage():
         self.value_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203')
         self.value_entry.place(x = 135, y = 205)
         self.client_label = ctk.CTkLabel(self.frame, font = ctk.CTkFont('verdana', size = 18), text = 'Cliente', text_color = '#ffffff').place(x = 45, y = 255)
-        self.client_entry = ctk.CTkEntry(self.frame, bg_color = '#ffffff', font = ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203')
-        self.client_entry.place(x = 135, y = 250)
+        clients = execute_query('SELECT name FROM clients', db_name = self.user_db_name, fetchall = True)
+        client_names = [client[0] for client in clients] if clients else []
+        self.client_combobox = ctk.CTkComboBox(self.frame, font=ctk.CTkFont('verdana', size = 18), width = 320, height = 36, fg_color = '#ffffff', border_width = 0, text_color = '#010203', values = client_names)
+        self.client_combobox.place(x=135, y=250)
         self.paid_var = ctk.IntVar()
         self.paid_checkbox = ctk.CTkCheckBox(self.frame, text = 'Pago?', font = ctk.CTkFont('verdana', size = 18), variable = self.paid_var, onvalue = 1, offvalue = 0, text_color = '#ffffff')
         self.paid_checkbox.place(x = 45, y = 307)
@@ -338,7 +340,7 @@ class OptionPage():
         name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
-        client_name = self.client_entry.get().strip().lower()
+        client_name = self.client_combobox.get().strip().lower()
         paid = self.paid_var.get()
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Cadastro de receita', message = 'Por favor, preencha todos os campos!')
@@ -350,8 +352,8 @@ class OptionPage():
                 voucher = file.read()
 
         client = execute_query('SELECT id FROM clients WHERE name = ?', (client_name,), fetchone = True, db_name = self.user_db_name)
-        if client:
-            client_id = client[0]
+        client_id = client[0] if client else None
+        if client_id is not None:
             execute_query('INSERT INTO incomes (name, date, value, client_id, paid, voucher) VALUES (?, ?, ?, ?, ?, ?)', (name, date, value, client_id, paid, voucher), db_name = self.user_db_name)
             messagebox.showinfo(title = 'Cadastro de receita', message = f"Receita '{name}' criada com sucesso!")
             self.clean_income_widgets()
@@ -363,7 +365,7 @@ class OptionPage():
         name = treat_entry(self.name_entry.get())
         date = self.date_entry.get().strip()
         value = self.value_entry.get().strip()
-        client_name = self.client_entry.get().strip().lower()
+        client_name = self.client_combobox.get().strip().lower()
         paid = self.paid_var.get()
         if not name or not date or not value or not client_name:
             messagebox.showerror(title = 'Atualização de receita', message = 'Por favor, preencha todos os campos!')
@@ -375,8 +377,9 @@ class OptionPage():
                 voucher = file.read()
 
         client = execute_query('SELECT id FROM clients WHERE name = ?', (client_name,), fetchone = True, db_name = self.user_db_name)
-        if client:
-            client_id = client[0]
+        client_id = client[0] if client else None
+
+        if client_id is not None:
             execute_query('UPDATE incomes SET value = ?, client_id = ?, paid = ?, voucher = ? WHERE name = ? AND date = ?', (value, client_id, paid, voucher, name, date), db_name=self.user_db_name)
             messagebox.showinfo(title = 'Atualização de receita', message = f"Receita '{name}' atualizada com sucesso!")
             self.clean_income_widgets()
@@ -422,7 +425,10 @@ class OptionPage():
         self.clean_income_widgets()
 
     def clean_income_widgets(self):
-        entries = [self.name_entry, self.date_entry, self.value_entry, self.client_entry]
+        clients = execute_query('SELECT name FROM clients', db_name = self.user_db_name, fetchall = True)
+        client_names = [client[0] for client in clients] if clients else []
+        self.client_combobox.configure(values = client_names)
+        entries = [self.name_entry, self.date_entry, self.value_entry]
         checkbuttons = [self.paid_var]
         clean_widgets(entries, checkbuttons, 'file_path', self)
 

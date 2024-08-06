@@ -49,6 +49,12 @@ def treat_entry(text):
     """Remove leading/trailing whitespace, converts to lowercase, and removes accents."""
     return unidecode(text.strip().lower())
 
+def hash_password(password):
+    # Cria um objeto hash para SHA-256
+    sha_signature = hashlib.sha256(password.encode()).hexdigest()
+    return sha_signature
+
+
 def clean_widgets(entries, checkbuttons = None, file_path_attr = None, obj = None):
     for entry in entries:
         entry.delete(0, 'end')
